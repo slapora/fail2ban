@@ -1,0 +1,47 @@
+---
+- hosts: all
+  tasks:
+    - name: Execute Python script
+      command: python /path/to/script.py
+
+    - name: Install fail2ban
+      yum:
+        name: fail2ban
+        state: present
+
+    - name: Enable fail2ban
+      systemd:
+        name: fail2ban
+        enabled: yes
+
+    - name: Start fail2ban
+      systemd:
+        name: fail2ban
+        state: started
+
+    - name: Copy jail.conf to jail.local
+      copy:
+        src: /etc/fail2ban/jail.conf
+        dest: /etc/fail2ban/jail.local
+
+    - name: Create jail.d directory
+      file:
+        path: /etc/fail2ban/jail.d
+        state: directory
+
+    - name: Create sshd.local file
+      copy:
+        content: |
+          [sshd]
+          enabled = true
+          port = ssh
+          action = iptables-multiport
+          logpath = /var/log/secure
+          maxretry = 3
+          bantime = 600
+        dest: /etc/fail2ban/jail.d/sshd.local
+
+    - name: Restart fail2ban
+      systemd:
+        name: fail2ban
+        state: restarted
